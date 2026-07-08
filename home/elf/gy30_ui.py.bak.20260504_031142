@@ -1,0 +1,154 @@
+import sys
+import cv2
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QLabel, QTextEdit,
+    QPushButton, QVBoxLayout, QHBoxLayout
+)
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QImage, QPixmap, QFont
+
+
+class GovSignUI(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("多模态无障碍政务交互终端")
+        self.resize(1024, 600)
+        
+        self.camera = None
+        self.init_ui()
+        self.init_camera()
+
+    def init_ui(self):
+        self.setStyleSheet("""
+            QWidget { 
+                background-color: #f8fafc; 
+                font-family: Microsoft YaHei, Arial; 
+            }
+            QLabel, QTextEdit, QPushButton { 
+                font-size: 16px; 
+            }
+            QPushButton {
+                background-color: #1677ff; 
+                color: white; 
+                border-radius: 6px; 
+                padding: 10px; 
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #0958d9; }
+        """)
+
+        # ==================== 标题 ====================
+        title = QLabel("多模态无障碍政务交互终端")
+        title.setAlignment(Qt.AlignCenter)
+        title.setFont(QFont("Microsoft YaHei", 22, QFont.Bold))
+        title.setStyleSheet("color: #0f172a; padding: 8px; background: white; border-radius: 10px;")
+
+        # ==================== 左侧：手语采集区 ====================
+        self.camera_label = QLabel("摄像头启动中...")
+        self.camera_label.setAlignment(Qt.AlignCenter)
+        self.camera_label.setStyleSheet("background-color: #1e2937; color: white; border-radius: 12px;")
+
+        self.raw_status = QLabel("当前识别：等待手语输入")
+        self.raw_status.setAlignment(Qt.AlignCenter)
+        self.raw_status.setStyleSheet("background-color: #e0f2fe; color: #0369a1; border-radius: 10px; padding: 10px; font-weight: bold;")
+
+        left = QVBoxLayout()
+        left.addWidget(QLabel("① 手语采集区"))
+        left.addWidget(self.camera_label, 6)
+        left.addWidget(self.raw_status, 1)
+
+        # ==================== 中间：历史对话记录 ====================
+        mid = QVBoxLayout()
+        mid.addWidget(QLabel("② 对话历史记录"))
+        
+        self.chat_box = QTextEdit()
+        self.chat_box.setReadOnly(True)
+        self.chat_box.append("系统：欢迎使用无障碍政务交互终端")
+        self.chat_box.append("系统：请面向摄像头做出手语动作...")
+        mid.addWidget(self.chat_box, 8)
+
+        # 按钮
+        btn_layout = QHBoxLayout()
+        self.sim_btn = QPushButton("模拟手语识别")
+        self.sim_btn.clicked.connect(self.simulate_sign)
+        btn_layout.addWidget(self.sim_btn)
+        mid.addLayout(btn_layout)
+
+        # ==================== 右侧：系统状态 ====================
+        right = QVBoxLayout()
+        right.addWidget(QLabel("③ 系统状态"))
+        self.mqtt_label = self.make_status("MQTT", "已连接", "#10b981")
+        self.temp_label = self.make_status("温度", "37.8℃", "#f59e0b")
+        self.conf_label = self.make_status("置信度", "--", "#8b5cf6")
+        self.pos_label = self.make_status("Position", "正常", "#10b981")
+        self.fan_label = self.make_status("风扇", "自动", "#64748b")
+
+        for label in [self.mqtt_label, self.temp_label, self.conf_label, self.pos_label, self.fan_label]:
+            right.addWidget(label)
+        right.addStretch()
+
+        # ==================== 总布局（抬高内容） ====================
+        content = QHBoxLayout()
+        content.setSpacing(12)
+        content.setContentsMargins(8, 5, 8, 5)   # 减小边距，抬高整体
+        content.addLayout(left, 4)
+        content.addLayout(mid, 5)
+        content.addLayout(right, 3)
+
+        main = QVBoxLayout()
+        main.setContentsMargins(10, 6, 10, 8)    # 进一步减小上下边距
+        main.addWidget(title)
+        main.addLayout(content)
+        self.setLayout(main)
+
+    def make_status(self, name, value, color):
+        label = QLabel(f"{name}：{value}")
+        label.setStyleSheet(f"""
+            background:white; padding:9px; border-radius:8px; 
+            border:2px solid {color}; font-weight:bold; font-size:15px;
+        """)
+        return label
+
+    def init_camera(self):
+        self.camera = cv2.VideoCapture(0)
+        if not self.camera.isOpened():
+            self.camera_label.setText("摄像头打开失败")
+            return
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_camera)
+        self.timer.start(60)
+
+    def update_camera(self):
+        ret, frame = self.camera.read()
+        if not ret: 
+            return
+        frame = cv2.flip(frame, 1)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w = frame.shape[:2]
+        qimg = QImage(frame.data, w, h, w*3, QImage.Format_RGB888)
+        self.camera_label.setPixmap(QPixmap.fromImage(qimg).scaled(
+            self.camera_label.width(), self.camera_label.height(), 
+            Qt.KeepAspectRatio, Qt.FastTransformation))
+
+    def simulate_sign(self):
+        text = "我要办理社保业务"
+        self.raw_status.setText(f"当前识别：{text}")
+        self.conf_label.setText("置信度：0.93")
+        
+        # 直接加入历史对话记录
+        self.chat_box.append(f"听障用户：{text}")
+        self.chat_box.moveCursor(Qt.End)   # 自动滚动到底部
+        
+        # TODO: 后续在这里添加 MQTT 发送到 PC 端工作人员
+
+    def closeEvent(self, event):
+        if self.camera:
+            self.camera.release()
+        event.accept()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    ui = GovSignUI()
+    ui.show()
+    sys.exit(app.exec_())

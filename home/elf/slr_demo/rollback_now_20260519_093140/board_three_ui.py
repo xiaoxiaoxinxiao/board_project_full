@@ -1,0 +1,881 @@
+import os
+import time
+import json
+import threading
+import tkinter as tk
+from tkinter import font as tkfont
+
+try:
+    import cv2
+except Exception:
+    cv2 = None
+
+try:
+    import paho.mqtt.client as mqtt
+except Exception:
+    mqtt = None
+
+# ===== SLR imports: camera keypoints -> sign classification =====
+import numpy as np
+from collections import deque
+
+from realtime_demo import (
+    BODY_MODEL,
+    HAND_MODEL,
+    SLR_MODEL,
+    DICT_PATH,
+    SEQ_LEN,
+    ACTION_FRAMES,
+    BOARD_CONF_THRESHOLD,
+    load_dict,
+    load_rknn,
+    preprocess,
+    parse_pose_best,
+    parse_pose_multi,
+    make_102_feature,
+    infer_slr_288,
+    assign_hands_to_left_right,
+    BODY_102_IDXS,
+)
+# ===== end SLR imports =====
+
+BROKER_IP = "192.168.43.220"
+BROKER_PORT = 1883
+
+TOPIC_PC_TO_BOARD = "pc/to_board/text"
+TOPIC_BOARD_STATUS = "board/status"
+TOPIC_BOARD_TO_PC = "slr/up/sign"
+
+CAMERA_DEVICE = "/dev/video52"
+CAMERA_WIDTH = 640
+CAMERA_HEIGHT = 480
+CAMERA_FPS = 30
+ACTION_FRAMES = 24  # 板端实际采24帧，再重采样成64帧
+
+LIGHT_VALUE_FILE = "/home/elf/gy30_light_value.txt"
+
+POSITION_FILES = [
+    "/home/elf/position.txt",
+    "/home/elf/position_state.txt",
+    "/tmp/position.txt",
+    "/tmp/position_state.txt",
+]
+
+FAN_FILES = [
+    "/home/elf/fan_state.txt",
+    "/tmp/fan_state.txt",
+]
+
+WINDOW_W = 800
+WINDOW_H = 480
+
+mqtt_connected = False
+
+
+def read_board_temp():
+    root = "/sys/class/thermal"
+    temps = []
+
+    if not os.path.exists(root):
+        return "--"
+
+    for name in os.listdir(root):
+        if not name.startswith("thermal_zone"):
+            continue
+
+        path = os.path.join(root, name, "temp")
+
+        try:
+            with open(path, "r") as f:
+                value = int(f.read().strip())
+
+            if value > 1000:
+                value = value / 1000.0
+
+            temps.append(value)
+        except Exception:
+            pass
+
+    if not temps:
+        return "--"
+
+    return f"{max(temps):.1f}℃"
+
+
+def read_text_file(path, default="--"):
+    try:
+        if not os.path.exists(path):
+            return default
+
+        with open(path, "r", encoding="utf-8") as f:
+            s = f.read().strip()
+
+        return s if s else default
+    except Exception:
+        return default
+
+
+def read_first_existing(paths, default="--"):
+    for path in paths:
+        value = read_text_file(path, default=None)
+        if value is not None:
+            return value
+    return default
+
+
+def make_mqtt_client(client_id):
+    if mqtt is None:
+        return None
+
+    try:
+        return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+    except Exception:
+        return mqtt.Client(client_id=client_id)
+
+
+
+def resample_seq_to_64(seq, out_len=64, input_dim=102):
+    arr = np.asarray(seq, dtype=np.float32)
+
+    if arr.ndim != 2:
+        arr = arr.reshape(arr.shape[0], -1)
+
+    if arr.shape[0] <= 0:
+        return np.zeros((out_len, input_dim), dtype=np.float32)
+
+    if arr.shape[1] != input_dim:
+        fixed = np.zeros((arr.shape[0], input_dim), dtype=np.float32)
+        d = min(input_dim, arr.shape[1])
+        fixed[:, :d] = arr[:, :d]
+        arr = fixed
+
+    if arr.shape[0] == out_len:
+        return arr.astype(np.float32)
+
+    old_idx = np.linspace(0, arr.shape[0] - 1, arr.shape[0])
+    new_idx = np.linspace(0, arr.shape[0] - 1, out_len)
+
+    out = np.zeros((out_len, input_dim), dtype=np.float32)
+
+    for d in range(input_dim):
+        out[:, d] = np.interp(new_idx, old_idx, arr[:, d])
+
+    return np.nan_to_num(out).astype(np.float32)
+
+
+
+
+
+# =========================================================
+# 节点显示函数：左手21点、右手21点、身体9点
+# =========================================================
+HAND_LINES_21 = [
+    (0, 1), (1, 2), (2, 3), (3, 4),
+    (0, 5), (5, 6), (6, 7), (7, 8),
+    (5, 9), (9, 10), (10, 11), (11, 12),
+    (9, 13), (13, 14), (14, 15), (15, 16),
+    (13, 17), (17, 18), (18, 19), (19, 20),
+    (0, 17),
+]
+
+BODY_LINES_9 = [
+    (0, 1),
+    (0, 2),
+    (3, 4),
+    (3, 5),
+    (5, 7),
+    (4, 6),
+    (6, 8),
+]
+
+
+def _safe_int_xy(pt):
+    x = int(float(pt[0]))
+    y = int(float(pt[1]))
+    return x, y
+
+
+def draw_hand_nodes_on_frame(frame, pts, prefix):
+    """
+    pts: shape [21,2]
+    prefix: "L" or "R"
+    """
+    if pts is None:
+        return
+
+    try:
+        if len(pts) < 21:
+            return
+
+        pts = pts[:21]
+
+        # 连线
+        for a, b in HAND_LINES_21:
+            x1, y1 = _safe_int_xy(pts[a])
+            x2, y2 = _safe_int_xy(pts[b])
+            cv2.line(frame, (x1, y1), (x2, y2), (255, 255, 0), 2)
+
+        # 点和编号
+        for i, pt in enumerate(pts):
+            x, y = _safe_int_xy(pt)
+
+            cv2.circle(frame, (x, y), 4, (0, 0, 255), -1)
+
+            cv2.putText(
+                frame,
+                f"{prefix}{i}",
+                (x + 4, y - 4),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.38,
+                (0, 255, 255),
+                1,
+                cv2.LINE_AA,
+            )
+
+    except Exception as e:
+        print("draw_hand_nodes_on_frame error:", e)
+
+
+def draw_body_nodes_on_frame(frame, body_xy):
+    """
+    body_xy: body_pose 原始17点
+    实际画的是新模型使用的9个身体点：
+    BODY_102_IDXS = [0,9,10,11,12,13,14,15,16]
+    """
+    if body_xy is None:
+        return
+
+    try:
+        if len(body_xy) < 17:
+            return
+
+        pts = []
+
+        for idx in BODY_102_IDXS:
+            pts.append(body_xy[idx])
+
+        # 连线
+        for a, b in BODY_LINES_9:
+            x1, y1 = _safe_int_xy(pts[a])
+            x2, y2 = _safe_int_xy(pts[b])
+            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
+
+        # 点和编号
+        for i, pt in enumerate(pts):
+            raw_idx = BODY_102_IDXS[i]
+            x, y = _safe_int_xy(pt)
+
+            cv2.circle(frame, (x, y), 5, (255, 0, 255), -1)
+
+            cv2.putText(
+                frame,
+                f"B{i}/{raw_idx}",
+                (x + 5, y - 5),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.42,
+                (255, 0, 255),
+                1,
+                cv2.LINE_AA,
+            )
+
+    except Exception as e:
+        print("draw_body_nodes_on_frame error:", e)
+
+
+def draw_102_nodes_on_frame(frame, body_xy, hand_dets):
+    """
+    在摄像头画面上显示最终送入新模型的关键点来源：
+    左手 L0~L20
+    右手 R0~R20
+    身体 B0~B8
+    """
+    try:
+        left_pts, right_pts = assign_hands_to_left_right(hand_dets, body_xy)
+
+        draw_body_nodes_on_frame(frame, body_xy)
+        draw_hand_nodes_on_frame(frame, left_pts, "L")
+        draw_hand_nodes_on_frame(frame, right_pts, "R")
+
+        # 右上角显示检测状态
+        hand_count = 0 if hand_dets is None else len(hand_dets)
+        status = f"body:{'Y' if body_xy is not None else 'N'} hands:{hand_count}"
+
+        cv2.putText(
+            frame,
+            status,
+            (15, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 0),
+            2,
+            cv2.LINE_AA,
+        )
+
+    except Exception as e:
+        print("draw_102_nodes_on_frame error:", e)
+
+
+class BoardUI:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Board UI")
+        self.root.geometry("800x480+0+0")
+        self.root.configure(bg="#eaeaea")
+
+        try:
+            self.root.attributes("-fullscreen", True)
+        except Exception:
+            pass
+
+        self.running = True
+        self.cap = None
+        self.video_photo = None
+        self.mqtt_client = make_mqtt_client("rv1126b_board_ui")
+
+        self.font_title = self.get_font(12, True)
+        self.font_text = self.get_font(10, False)
+        self.font_chat = self.get_font(11, False)
+        self.font_small = self.get_font(8, False)
+        self.font_status = self.get_font(9, False)
+        self.font_result = self.get_font(13, True)
+
+        self.build_ui()
+
+        # ===== SLR model init =====
+        self.id2word = load_dict(DICT_PATH)
+
+        self.body_rknn = load_rknn(BODY_MODEL)
+        self.hand_rknn = load_rknn(HAND_MODEL)
+        self.slr_rknn = load_rknn(SLR_MODEL)
+
+        self.seq_buffer = deque(maxlen=ACTION_FRAMES)
+        self.last_word = ""
+        self.last_score = 0.0
+        self.infer_frame_count = 0
+        self.last_sent_word = ""
+        self.last_sent_time = 0.0
+        # ===== end SLR model init =====
+
+        self.start_camera()
+        self.start_mqtt()
+
+        self.root.bind("<Escape>", lambda e: self.close())
+        self.root.bind("q", lambda e: self.close())
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
+
+        self.update_camera()
+        self.update_status()
+
+    def get_font(self, size, bold=False):
+        weight = "bold" if bold else "normal"
+        for name in ["Noto Sans CJK SC", "WenQuanYi Zen Hei", "Arial"]:
+            try:
+                return tkfont.Font(family=name, size=size, weight=weight)
+            except Exception:
+                pass
+        return tkfont.Font(size=size, weight=weight)
+
+    def make_panel(self, x, y, w, h, title):
+        frame = tk.Frame(
+            self.root,
+            bg="white",
+            bd=2,
+            relief="solid",
+            highlightbackground="black",
+            highlightthickness=1,
+        )
+        frame.place(x=x, y=y, width=w, height=h)
+
+        label = tk.Label(
+            frame,
+            text=title,
+            bg="white",
+            fg="black",
+            font=self.font_title,
+            anchor="center",
+        )
+        label.place(x=2, y=2, width=w - 4, height=24)
+
+        return frame
+
+    def build_ui(self):
+        # 根据真实屏幕宽度自动居中，避免整体偏左
+        self.root.update_idletasks()
+
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+
+        # 三分区总宽：不超过屏幕宽度，同时尽量铺开
+        content_w = min(sw - 20, 980)
+        content_h = min(sh - 12, 468)
+
+        start_x = max(0, (sw - content_w) // 2)
+        start_y = max(0, (sh - content_h) // 2)
+
+        gap = 6
+
+        # 左边大，中间正常，右边不要太窄
+        left_w = int(content_w * 0.55)
+        middle_w = int(content_w * 0.25)
+        right_w = content_w - left_w - middle_w - gap * 2
+
+        # 保底，避免右区被剪断
+        if right_w < 150:
+            right_w = 150
+            middle_w = max(170, content_w - left_w - right_w - gap * 2)
+
+        panel_h = content_h
+
+        left_x = start_x
+        middle_x = left_x + left_w + gap
+        right_x = middle_x + middle_w + gap
+
+        self.left = self.make_panel(left_x, start_y, left_w, panel_h, "左区：摄像头画面")
+        self.middle = self.make_panel(middle_x, start_y, middle_w, panel_h, "中区：对话")
+        self.right = self.make_panel(right_x, start_y, right_w, panel_h, "右区：状态")
+
+        # 左区摄像头
+        video_w = left_w - 16
+        video_h = panel_h - 118
+
+        self.video_w = video_w
+        self.video_h = video_h
+
+        self.video_label = tk.Label(
+            self.left,
+            text="摄像头加载中...",
+            bg="black",
+            fg="white",
+            font=self.font_text,
+            justify="center",
+        )
+        self.video_label.place(x=8, y=32, width=video_w, height=video_h)
+
+        self.sign_label = tk.Label(
+            self.left,
+            text="识别结果：等待识别",
+            bg="white",
+            fg="#007000",
+            font=self.font_result,
+            wraplength=video_w,
+            justify="center",
+        )
+        self.sign_label.place(x=8, y=video_h + 40, width=video_w, height=70)
+
+        # 中区对话
+        self.chat_box = tk.Text(
+            self.middle,
+            bg="#fafafa",
+            fg="black",
+            font=self.font_chat,
+            bd=1,
+            relief="solid",
+            wrap="word",
+        )
+        self.chat_box.place(x=6, y=32, width=middle_w - 12, height=panel_h - 44)
+        self.chat_box.config(state="disabled")
+
+        self.add_chat("系统", "等待工作人员消息")
+
+        # 右区状态
+        self.status_labels = {}
+
+        rows = [
+            ("MQTT", "未连"),
+            ("温度", "--"),
+            ("位置", "--"),
+            ("光照", "--"),
+            ("风扇", "--"),
+            ("置信", "--"),
+        ]
+
+        self.status_value_w = right_w - 12
+
+        y = 35
+        row_gap = max(56, (panel_h - 50) // 6)
+        for key, value in rows:
+            self.add_status_row(key, value, y)
+            y += row_gap
+
+    def add_status_row(self, key, value, y):
+        value_w = getattr(self, "status_value_w", 120)
+
+        key_label = tk.Label(
+            self.right,
+            text=key,
+            bg="white",
+            fg="black",
+            font=self.font_small,
+            anchor="center",
+        )
+        key_label.place(x=6, y=y, width=value_w, height=18)
+
+        value_label = tk.Label(
+            self.right,
+            text=value,
+            bg="white",
+            fg="#0055cc",
+            font=self.font_status,
+            anchor="center",
+            wraplength=value_w - 6,
+            justify="center",
+        )
+        value_label.place(x=6, y=y + 20, width=value_w, height=42)
+
+        self.status_labels[key] = value_label
+
+    def add_chat(self, speaker, text):
+        self.chat_box.config(state="normal")
+        now = time.strftime("%H:%M:%S")
+        self.chat_box.insert("end", f"[{now}] {speaker}：\n")
+        self.chat_box.insert("end", text + "\n\n")
+        self.chat_box.see("end")
+        self.chat_box.config(state="disabled")
+
+    def start_camera(self):
+        if cv2 is None:
+            self.video_label.config(text="未安装 cv2")
+            return
+
+        try:
+            self.cap = cv2.VideoCapture(CAMERA_DEVICE, cv2.CAP_V4L2)
+
+            self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
+
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
+
+            self.cap.set(cv2.CAP_PROP_FPS, CAMERA_FPS)
+
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+            if not self.cap.isOpened():
+                self.video_label.config(text="摄像头未打开\n/dev/video52")
+                self.cap = None
+        except Exception as e:
+            self.video_label.config(text=f"摄像头错误：{e}")
+            self.cap = None
+
+
+    def run_sign_recognition(self, frame_bgr):
+        """
+        新模型板端识别：
+        body_pose.rknn + hand_pose.rknn 提关键点
+        Top2 手部关键点 -> 左手21点 + 右手21点
+        身体取9点
+        拼成102维
+        24帧重采样成64帧
+        sign_tcn_288_hand102_64x102.rknn 推理
+        """
+        global mqtt_connected
+
+        try:
+            frame_h, frame_w = frame_bgr.shape[:2]
+
+            inp, scale, dw, dh = preprocess(frame_bgr)
+
+            body_out = self.body_rknn.inference(inputs=[inp])
+            hand_out = self.hand_rknn.inference(inputs=[inp])
+
+            body_xy, body_score = parse_pose_best(
+                body_out,
+                num_kpts=17,
+                scale=scale,
+                dw=dw,
+                dh=dh,
+                frame_w=frame_w,
+                frame_h=frame_h,
+                conf_thres=0.20,
+            )
+
+            hand_dets = parse_pose_multi(
+                hand_out,
+                num_kpts=21,
+                scale=scale,
+                dw=dw,
+                dh=dh,
+                frame_w=frame_w,
+                frame_h=frame_h,
+                topk=2,
+                conf_thres=0.18,
+            )
+
+            # 保存最近一次识别到的节点，给 update_camera 画到真正显示的画面上
+            self.debug_body_xy = body_xy
+            self.debug_hand_dets = hand_dets
+            self.debug_node_time = time.time()
+
+            feat102 = make_102_feature(
+                hand_dets,
+                body_xy,
+                frame_w,
+                frame_h,
+            )
+
+            self.seq_buffer.append(feat102)
+
+            if len(self.seq_buffer) < ACTION_FRAMES:
+                self.sign_label.config(
+                    text=f"缓冲中 {len(self.seq_buffer)}/{ACTION_FRAMES}"
+                )
+                return
+
+            pred, word, score, top_items = infer_slr_288(
+                self.slr_rknn,
+                list(self.seq_buffer),
+                self.id2word,
+            )
+
+            if pred is None or not word:
+                self.sign_label.config(text="识别中...")
+                return
+
+            # UI只显示中文词，不显示ID
+            if score >= BOARD_CONF_THRESHOLD:
+                self.last_word = word
+                self.last_score = score
+
+                self.sign_label.config(text=f"{word}")
+
+                # MQTT相邻词不重复发送
+                if (
+                    self.mqtt_client is not None
+                    and mqtt_connected
+                    and word != getattr(self, "last_sent_word", None)
+                ):
+                    try:
+                        self.mqtt_client.publish(TOPIC_BOARD_TO_PC, word)
+                        self.add_chat("群众", word)
+                        self.last_sent_word = word
+                    except Exception as e:
+                        self.add_chat("MQTT", f"发送失败: {e}")
+            else:
+                self.sign_label.config(text="识别中...")
+
+        except Exception as e:
+            self.sign_label.config(text=f"识别异常")
+            print("run_sign_recognition error:", e)
+
+    def update_camera(self):
+        """
+        USB摄像头三分区稳定版：
+        1. UI线程只负责读取摄像头和显示画面
+        2. 模型识别放到后台线程，避免卡住UI
+        3. 识别采样按时间间隔，不按帧数，解决64帧窗口和FPS不匹配问题
+        """
+        if not self.running:
+            return
+
+        # 第一次进入时初始化运行变量
+        if not hasattr(self, "sample_interval"):
+            self.sample_interval = 0.06       # 每0.12秒采一次识别帧，64帧约7.7秒
+            self.last_sample_time = 0.0
+            self.infer_busy = False
+
+            self.fps_last_time = time.time()
+            self.fps_frame_count = 0
+            self.current_fps = 0.0
+
+        if self.cap is not None:
+            try:
+                ret, frame = self.cap.read()
+
+                if ret and frame is not None:
+                    now = time.time()
+
+                    # =========================
+                    # FPS统计，只统计UI显示帧率
+                    # =========================
+                    self.fps_frame_count += 1
+                    dt = now - self.fps_last_time
+
+                    if dt >= 1.0:
+                        self.current_fps = self.fps_frame_count / dt
+                        self.fps_frame_count = 0
+                        self.fps_last_time = now
+
+                    # =========================
+                    # 按时间采样识别，不再按 %15帧
+                    # 后台线程跑模型，避免UI卡死
+                    # =========================
+                    if (now - self.last_sample_time) >= self.sample_interval:
+                        self.last_sample_time = now
+
+                        if not self.infer_busy:
+                            self.infer_busy = True
+                            infer_frame = frame.copy()
+
+                            def infer_worker():
+                                try:
+                                    self.run_sign_recognition(infer_frame)
+                                except Exception as e:
+                                    print("识别线程异常:", e)
+                                    try:
+                                        self.root.after(
+                                            0,
+                                            lambda: self.sign_label.config(
+                                                text=f"识别线程异常: {e}"
+                                            )
+                                        )
+                                    except Exception:
+                                        pass
+                                finally:
+                                    self.infer_busy = False
+
+                            threading.Thread(
+                                target=infer_worker,
+                                daemon=True
+                            ).start()
+
+                    # =========================
+                    # UI显示画面
+                    # =========================
+                    show_frame = frame.copy()
+
+                    cv2.putText(
+                        show_frame,
+                        "UI FPS: %.1f  sample: %.2fs  busy:%s" % (
+                            self.current_fps,
+                            self.sample_interval,
+                            "Y" if self.infer_busy else "N"
+                        ),
+                        (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.7,
+                        (0, 255, 255),
+                        2
+                    )
+
+                    show_frame = cv2.resize(show_frame, (484, 350))
+                    show_frame = cv2.cvtColor(show_frame, cv2.COLOR_BGR2RGB)
+
+                    ok, ppm = cv2.imencode(".ppm", show_frame)
+
+                    if ok:
+                        self.video_photo = tk.PhotoImage(
+                            data=ppm.tobytes(),
+                            format="PPM",
+                        )
+                        self.video_label.config(
+                            image=self.video_photo,
+                            text=""
+                        )
+                else:
+                    self.video_label.config(text="摄像头读取失败")
+
+            except Exception as e:
+                self.video_label.config(text=f"摄像头异常: {e}")
+
+        # 原来是50ms，太慢；这里改成1ms，实际速度由摄像头cap.read决定
+        self.root.after(1, self.update_camera)
+
+    def start_mqtt(self):
+        if self.mqtt_client is None:
+            self.add_chat("系统", "paho-mqtt 未安装")
+            return
+
+        self.mqtt_client.on_connect = self.on_mqtt_connect
+        self.mqtt_client.on_disconnect = self.on_mqtt_disconnect
+        self.mqtt_client.on_message = self.on_mqtt_message
+
+        threading.Thread(target=self.mqtt_loop, daemon=True).start()
+
+    def mqtt_loop(self):
+        while self.running:
+            try:
+                self.mqtt_client.connect(BROKER_IP, BROKER_PORT, 60)
+                self.mqtt_client.loop_forever()
+            except Exception as e:
+                self.add_chat("系统", f"MQTT连接失败：{e}")
+                time.sleep(3)
+
+    def on_mqtt_connect(self, client, userdata, flags, rc):
+        global mqtt_connected
+
+        if rc == 0:
+            mqtt_connected = True
+            client.subscribe(TOPIC_PC_TO_BOARD)
+            client.publish(TOPIC_BOARD_STATUS, "board ui online")
+            self.root.after(0, lambda: self.add_chat("系统", "MQTT已连接"))
+        else:
+            mqtt_connected = False
+
+    def on_mqtt_disconnect(self, client, userdata, rc):
+        global mqtt_connected
+        mqtt_connected = False
+
+    def on_mqtt_message(self, client, userdata, msg):
+        try:
+            text = msg.payload.decode("utf-8", errors="ignore").strip()
+        except Exception:
+            text = str(msg.payload)
+
+        if not text:
+            return
+
+        self.root.after(0, lambda: self.add_chat("工作人员", text))
+
+    def update_status(self):
+        mqtt_text = "已连" if mqtt_connected else "未连"
+        self.status_labels["MQTT"].config(text=mqtt_text)
+
+        self.status_labels["温度"].config(text=read_board_temp())
+
+        position = read_first_existing(POSITION_FILES, "--")
+        self.status_labels["位置"].config(text=position)
+
+        light = read_text_file(LIGHT_VALUE_FILE, "--")
+        self.status_labels["光照"].config(text=light)
+
+        fan = read_first_existing(FAN_FILES, "--")
+        self.status_labels["风扇"].config(text=fan)
+
+        self.status_labels["置信"].config(text="--")
+
+        try:
+            if self.mqtt_client is not None and mqtt_connected:
+                payload = {
+                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "temp": read_board_temp(),
+                    "position": position,
+                    "light": light,
+                    "fan": fan,
+                }
+                self.mqtt_client.publish(
+                    TOPIC_BOARD_STATUS,
+                    json.dumps(payload, ensure_ascii=False),
+                )
+        except Exception:
+            pass
+
+        self.root.after(1000, self.update_status)
+
+    def close(self):
+        self.running = False
+
+        try:
+            if self.cap is not None:
+                self.cap.release()
+        except Exception:
+            pass
+
+        try:
+            if self.mqtt_client is not None:
+                self.mqtt_client.disconnect()
+        except Exception:
+            pass
+
+        self.root.destroy()
+
+    def run(self):
+        self.root.mainloop()
+
+
+def main():
+    app = BoardUI()
+    app.run()
+
+
+if __name__ == "__main__":
+    main()

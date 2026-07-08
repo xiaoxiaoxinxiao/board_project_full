@@ -1,0 +1,20 @@
+[Unit]
+Description=SLR Board Three Zone UI
+After=multi-user.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/elf/slr_demo
+ExecStart=/bin/bash /home/elf/slr_demo/start_board_three_ui.sh
+Restart=always
+RestartSec=3
+KillMode=control-group
+Environment=DISPLAY=:0
+Environment=HOME=/home/elf
+Environment=XAUTHORITY=/home/elf/.Xauthority
+StandardOutput=append:/home/elf/slr_demo/board_three_ui_autostart.log
+StandardError=append:/home/elf/slr_demo/board_three_ui_autostart.log
+
+[Install]
+WantedBy=multi-user.target

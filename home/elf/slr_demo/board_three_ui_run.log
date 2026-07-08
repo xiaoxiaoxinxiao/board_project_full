@@ -1,0 +1,22 @@
+nohup: ignoring input
+W rknn-toolkit-lite2 version: 2.3.2
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+I RKNN: [05:25:23.515] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [05:25:23.516] RKNN Driver Information, version: 0.9.8
+I RKNN: [05:25:23.520] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [05:25:23.567] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+I RKNN: [05:25:23.856] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [05:25:23.856] RKNN Driver Information, version: 0.9.8
+I RKNN: [05:25:23.857] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [05:25:23.885] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+I RKNN: [05:25:24.125] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [05:25:24.125] RKNN Driver Information, version: 0.9.8
+I RKNN: [05:25:24.126] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [05:25:24.130] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+[ WARN:0@3.340] global ./modules/videoio/src/cap_gstreamer.cpp (2401) handleMessage OpenCV | GStreamer warning: Embedded video playback halted; module v4l2src0 reported: Internal data stream error.
+[ WARN:0@3.341] global ./modules/videoio/src/cap_gstreamer.cpp (1356) open OpenCV | GStreamer warning: unable to start pipeline
+[ WARN:0@3.341] global ./modules/videoio/src/cap_gstreamer.cpp (862) isPipelinePlaying OpenCV | GStreamer warning: GStreamer: pipeline have not been created

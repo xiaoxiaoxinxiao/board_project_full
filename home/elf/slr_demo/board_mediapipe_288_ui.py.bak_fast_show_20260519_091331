@@ -1,0 +1,574 @@
+import os
+import time
+from collections import deque
+
+import cv2
+import numpy as np
+import tkinter as tk
+from tkinter import font as tkfont
+
+import mediapipe as mp
+from rknnlite.api import RKNNLite
+
+
+CAMERA_DEVICE = "/dev/video52"
+
+SLR_MODEL = "sign_tcn_288_hand102_64x102.rknn"
+DICT_PATH = "dictionary_288class.txt"
+
+SEQ_LEN = 64
+ACTION_FRAMES = 24
+INPUT_DIM = 102
+NUM_CLASSES = 288
+
+CONF_THRESHOLD = 0.25
+END_MISSING_FRAMES = 5
+
+BODY_POSE_IDXS = [0, 9, 10, 11, 12, 13, 14, 15, 16]
+
+BANNED_WORDS = {"瘦"}
+
+LABEL_REMAP = {
+    168: 186,   # 老人 -> 我
+    105: 99,    # 多 -> 有
+    273: 80,    # 经验 -> 困难
+}
+
+WINDOW_W = 800
+WINDOW_H = 480
+VIDEO_W = 560
+VIDEO_H = 420
+
+
+HAND_LINES = [
+    (0, 1), (1, 2), (2, 3), (3, 4),
+    (0, 5), (5, 6), (6, 7), (7, 8),
+    (5, 9), (9, 10), (10, 11), (11, 12),
+    (9, 13), (13, 14), (14, 15), (15, 16),
+    (13, 17), (17, 18), (18, 19), (19, 20),
+    (0, 17),
+]
+
+BODY_LINES = [
+    (0, 1), (0, 2),
+    (3, 4),
+    (3, 5), (5, 7),
+    (4, 6), (6, 8),
+]
+
+
+def load_dict(path):
+    id2word = {}
+
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+
+            if not line:
+                continue
+
+            parts = line.split()
+
+            if len(parts) < 3:
+                continue
+
+            try:
+                new_label = int(parts[0])
+                word = "".join(parts[2:])
+                id2word[new_label] = word
+            except Exception:
+                pass
+
+    print("load dict:", path, "classes:", len(id2word))
+    return id2word
+
+
+def load_rknn(path):
+    rknn = RKNNLite()
+
+    ret = rknn.load_rknn(path)
+    print("load_rknn ret =", ret)
+
+    if ret != 0:
+        raise RuntimeError("load_rknn failed: " + path)
+
+    ret = rknn.init_runtime()
+    print("init_runtime ret =", ret)
+
+    if ret != 0:
+        raise RuntimeError("init_runtime failed: " + path)
+
+    return rknn
+
+
+def get_hand_xy(hand_landmarks):
+    if hand_landmarks is None:
+        return None
+
+    pts = []
+
+    for lm in hand_landmarks.landmark:
+        pts.append([lm.x, lm.y])
+
+    return np.asarray(pts, dtype=np.float32)
+
+
+def get_body_xy(pose_landmarks):
+    if pose_landmarks is None:
+        return None
+
+    pts = []
+
+    for idx in BODY_POSE_IDXS:
+        lm = pose_landmarks.landmark[idx]
+        pts.append([lm.x, lm.y])
+
+    return np.asarray(pts, dtype=np.float32)
+
+
+def normalize_points(left_pts, right_pts, body_pts):
+    zero_left = np.zeros((21, 2), dtype=np.float32)
+    zero_right = np.zeros((21, 2), dtype=np.float32)
+    zero_body = np.zeros((9, 2), dtype=np.float32)
+
+    visible = []
+
+    if left_pts is not None:
+        visible.append(left_pts)
+
+    if right_pts is not None:
+        visible.append(right_pts)
+
+    if body_pts is not None:
+        visible.append(body_pts)
+
+    if len(visible) == 0:
+        return zero_left, zero_right, zero_body
+
+    all_pts = np.concatenate(visible, axis=0)
+
+    center = all_pts.mean(axis=0)
+
+    min_xy = all_pts.min(axis=0)
+    max_xy = all_pts.max(axis=0)
+
+    scale = max(max_xy[0] - min_xy[0], max_xy[1] - min_xy[1])
+
+    # body_pts[3] / body_pts[4] 是左右肩
+    if body_pts is not None and body_pts.shape[0] >= 5:
+        lsho = body_pts[3]
+        rsho = body_pts[4]
+        dist = np.linalg.norm(lsho - rsho)
+
+        if dist > 1e-6:
+            center = (lsho + rsho) / 2.0
+            scale = dist
+
+    if scale < 1e-6:
+        scale = 1.0
+
+    left_out = (left_pts - center) / scale if left_pts is not None else zero_left
+    right_out = (right_pts - center) / scale if right_pts is not None else zero_right
+    body_out = (body_pts - center) / scale if body_pts is not None else zero_body
+
+    return left_out, right_out, body_out
+
+
+def extract_102_from_mediapipe(frame_bgr, holistic):
+    rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+    rgb.flags.writeable = False
+
+    res = holistic.process(rgb)
+
+    left = get_hand_xy(res.left_hand_landmarks)
+    right = get_hand_xy(res.right_hand_landmarks)
+    body = get_body_xy(res.pose_landmarks)
+
+    left_norm, right_norm, body_norm = normalize_points(left, right, body)
+
+    feat = np.concatenate([
+        left_norm.flatten(),
+        right_norm.flatten(),
+        body_norm.flatten(),
+    ], axis=0)
+
+    feat = np.nan_to_num(feat, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+
+    has_left = res.left_hand_landmarks is not None
+    has_right = res.right_hand_landmarks is not None
+    hand_present = has_left or has_right
+    both_missing = not has_left and not has_right
+
+    return feat, res, has_left, has_right, hand_present, both_missing
+
+
+def resample_seq_to_64(seq):
+    arr = np.asarray(seq, dtype=np.float32)
+
+    if arr.ndim != 2:
+        arr = arr.reshape(arr.shape[0], -1)
+
+    if arr.shape[0] <= 0:
+        return np.zeros((SEQ_LEN, INPUT_DIM), dtype=np.float32)
+
+    if arr.shape[1] != INPUT_DIM:
+        fixed = np.zeros((arr.shape[0], INPUT_DIM), dtype=np.float32)
+        d = min(INPUT_DIM, arr.shape[1])
+        fixed[:, :d] = arr[:, :d]
+        arr = fixed
+
+    old_idx = np.linspace(0, arr.shape[0] - 1, arr.shape[0])
+    new_idx = np.linspace(0, arr.shape[0] - 1, SEQ_LEN)
+
+    out = np.zeros((SEQ_LEN, INPUT_DIM), dtype=np.float32)
+
+    for d in range(INPUT_DIM):
+        out[:, d] = np.interp(new_idx, old_idx, arr[:, d])
+
+    return np.nan_to_num(out).astype(np.float32)
+
+
+def softmax(x):
+    x = np.asarray(x, dtype=np.float32)
+    x = x - np.max(x)
+    e = np.exp(x)
+    return e / np.sum(e)
+
+
+def remap_label(label):
+    return int(LABEL_REMAP.get(int(label), int(label)))
+
+
+def infer_word(rknn, frames, id2word):
+    x = resample_seq_to_64(frames)
+    x = np.expand_dims(x, axis=0).astype(np.float32)
+
+    outs = rknn.inference(inputs=[x])
+
+    if outs is None or len(outs) == 0:
+        return None, "", 0.0, []
+
+    logits = np.asarray(outs[0]).reshape(-1)
+    prob = softmax(logits)
+
+    order = np.argsort(prob)[::-1]
+
+    top_items = []
+
+    for raw_idx in order[:5]:
+        raw_idx = int(raw_idx)
+        show_idx = remap_label(raw_idx)
+        word = id2word.get(show_idx, "")
+        score = float(prob[raw_idx])
+        top_items.append((show_idx, word, score, raw_idx))
+
+    for show_idx, word, score, raw_idx in top_items:
+        if not word:
+            continue
+
+        if word in BANNED_WORDS:
+            continue
+
+        return show_idx, word, score, top_items
+
+    return None, "", 0.0, top_items
+
+
+def norm_to_pixel(pt, w, h):
+    return int(float(pt[0]) * w), int(float(pt[1]) * h)
+
+
+def draw_nodes(frame, res):
+    h, w = frame.shape[:2]
+
+    # 左手
+    if res.left_hand_landmarks is not None:
+        pts = []
+        for lm in res.left_hand_landmarks.landmark:
+            pts.append((int(lm.x * w), int(lm.y * h)))
+
+        for a, b in HAND_LINES:
+            cv2.line(frame, pts[a], pts[b], (255, 255, 0), 2)
+
+        for i, (x, y) in enumerate(pts):
+            cv2.circle(frame, (x, y), 4, (0, 0, 255), -1)
+            cv2.putText(frame, f"L{i}", (x + 4, y - 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1)
+
+    # 右手
+    if res.right_hand_landmarks is not None:
+        pts = []
+        for lm in res.right_hand_landmarks.landmark:
+            pts.append((int(lm.x * w), int(lm.y * h)))
+
+        for a, b in HAND_LINES:
+            cv2.line(frame, pts[a], pts[b], (255, 255, 0), 2)
+
+        for i, (x, y) in enumerate(pts):
+            cv2.circle(frame, (x, y), 4, (0, 0, 255), -1)
+            cv2.putText(frame, f"R{i}", (x + 4, y - 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1)
+
+    # 身体9点
+    if res.pose_landmarks is not None:
+        body_pts = []
+
+        for idx in BODY_POSE_IDXS:
+            lm = res.pose_landmarks.landmark[idx]
+            body_pts.append((int(lm.x * w), int(lm.y * h)))
+
+        for a, b in BODY_LINES:
+            cv2.line(frame, body_pts[a], body_pts[b], (0, 255, 255), 2)
+
+        for i, (x, y) in enumerate(body_pts):
+            raw = BODY_POSE_IDXS[i]
+            cv2.circle(frame, (x, y), 5, (255, 0, 255), -1)
+            cv2.putText(frame, f"B{i}/{raw}", (x + 5, y - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 0, 255), 1)
+
+
+def frame_to_tk_image(frame_bgr, width, height):
+    frame = cv2.resize(frame_bgr, (width, height))
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    h, w = rgb.shape[:2]
+
+    ppm = b"P6 %d %d 255\n" % (w, h) + rgb.tobytes()
+
+    return tk.PhotoImage(data=ppm, format="PPM")
+
+
+class BoardMediapipeUI:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Board MediaPipe 288 Hand102")
+        self.root.geometry(f"{WINDOW_W}x{WINDOW_H}+0+0")
+        self.root.configure(bg="black")
+
+        self.font_big = tkfont.Font(family="WenQuanYi Zen Hei", size=32, weight="bold")
+        self.font_mid = tkfont.Font(family="WenQuanYi Zen Hei", size=18)
+        self.font_small = tkfont.Font(family="WenQuanYi Zen Hei", size=13)
+
+        self.video_label = tk.Label(self.root, bg="black")
+        self.video_label.place(x=0, y=0, width=VIDEO_W, height=VIDEO_H)
+
+        self.word_label = tk.Label(
+            self.root,
+            text="等待手进入画面",
+            fg="#00ff00",
+            bg="black",
+            font=self.font_big,
+            wraplength=220,
+            justify="center",
+        )
+        self.word_label.place(x=VIDEO_W, y=20, width=WINDOW_W - VIDEO_W, height=90)
+
+        self.status_label = tk.Label(
+            self.root,
+            text="状态",
+            fg="#ffff00",
+            bg="black",
+            font=self.font_mid,
+            wraplength=220,
+            justify="left",
+        )
+        self.status_label.place(x=VIDEO_W + 10, y=125, width=WINDOW_W - VIDEO_W - 20, height=150)
+
+        self.sentence_label = tk.Label(
+            self.root,
+            text="已识别：",
+            fg="#ffffff",
+            bg="black",
+            font=self.font_mid,
+            wraplength=220,
+            justify="left",
+        )
+        self.sentence_label.place(x=VIDEO_W + 10, y=285, width=WINDOW_W - VIDEO_W - 20, height=120)
+
+        self.fps_label = tk.Label(
+            self.root,
+            text="FPS: -",
+            fg="#00ffff",
+            bg="black",
+            font=self.font_small,
+            anchor="w",
+        )
+        self.fps_label.place(x=0, y=VIDEO_H, width=WINDOW_W, height=WINDOW_H - VIDEO_H)
+
+        print("load models...")
+        self.id2word = load_dict(DICT_PATH)
+        self.slr_rknn = load_rknn(SLR_MODEL)
+
+        self.mp_holistic = mp.solutions.holistic
+        self.holistic = self.mp_holistic.Holistic(
+            static_image_mode=False,
+            model_complexity=0,
+            smooth_landmarks=True,
+            enable_segmentation=False,
+            refine_face_landmarks=False,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+
+        self.cap = cv2.VideoCapture(CAMERA_DEVICE, cv2.CAP_V4L2)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_FPS, 30)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+        if not self.cap.isOpened():
+            raise RuntimeError("camera open failed: " + CAMERA_DEVICE)
+
+        self.frames = []
+        self.state = "WAIT_HAND"
+        self.missing_count = 0
+        self.locked_word = None
+        self.locked_label = None
+        self.locked_score = 0.0
+        self.last_confirmed_word = None
+        self.output_words = []
+
+        self.frame_count = 0
+        self.t0 = time.time()
+        self.fps = 0.0
+
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
+
+    def update(self):
+        ret, frame = self.cap.read()
+
+        if not ret or frame is None:
+            self.status_label.config(text="摄像头读取失败")
+            self.root.after(30, self.update)
+            return
+
+        self.frame_count += 1
+        now = time.time()
+
+        if now - self.t0 >= 1.0:
+            self.fps = self.frame_count / (now - self.t0)
+            self.frame_count = 0
+            self.t0 = now
+
+        feat, res, has_left, has_right, hand_present, both_missing = extract_102_from_mediapipe(
+            frame,
+            self.holistic,
+        )
+
+        draw_nodes(frame, res)
+
+        if self.state == "WAIT_HAND":
+            self.frames.clear()
+            self.missing_count = 0
+            self.locked_word = None
+            self.locked_label = None
+            self.locked_score = 0.0
+
+            if hand_present:
+                self.state = "COLLECTING"
+                self.frames.append(feat)
+                self.word_label.config(text="采集中")
+            else:
+                self.word_label.config(text="等待手进入画面")
+
+        elif self.state == "COLLECTING":
+            if hand_present:
+                self.missing_count = 0
+
+                if self.locked_word is None:
+                    if len(self.frames) < ACTION_FRAMES:
+                        self.frames.append(feat)
+
+                    self.status_label.config(
+                        text=f"采集中：{len(self.frames)}/{ACTION_FRAMES}\n"
+                             f"L:{'Y' if has_left else 'N'} R:{'Y' if has_right else 'N'}"
+                    )
+
+                    if len(self.frames) >= ACTION_FRAMES:
+                        pred, word, score, top_items = infer_word(
+                            self.slr_rknn,
+                            self.frames,
+                            self.id2word,
+                        )
+
+                        if pred is not None and word and score >= CONF_THRESHOLD:
+                            self.locked_label = pred
+                            self.locked_word = word
+                            self.locked_score = score
+                            self.word_label.config(text=word)
+                            self.status_label.config(
+                                text=f"当前词已锁定\n置信度：{score:.2f}\n"
+                                     f"L:{'Y' if has_left else 'N'} R:{'Y' if has_right else 'N'}"
+                            )
+                        else:
+                            self.word_label.config(text="识别中")
+                else:
+                    self.word_label.config(text=self.locked_word)
+                    self.status_label.config(
+                        text=f"当前词已锁定\n置信度：{self.locked_score:.2f}\n等待双手离开"
+                    )
+
+            if both_missing:
+                self.missing_count += 1
+
+                if self.locked_word is not None:
+                    self.status_label.config(
+                        text=f"双手离开确认中：{self.missing_count}/{END_MISSING_FRAMES}"
+                    )
+
+                if self.missing_count >= END_MISSING_FRAMES:
+                    if self.locked_word is not None:
+                        if self.locked_word != self.last_confirmed_word:
+                            self.output_words.append(self.locked_word)
+                            self.last_confirmed_word = self.locked_word
+
+                        self.sentence_label.config(
+                            text="已识别：" + " ".join(self.output_words[-8:])
+                        )
+
+                    self.frames.clear()
+                    self.locked_word = None
+                    self.locked_label = None
+                    self.locked_score = 0.0
+                    self.missing_count = 0
+                    self.state = "WAIT_HAND"
+
+        photo = frame_to_tk_image(frame, VIDEO_W, VIDEO_H)
+        self.video_label.configure(image=photo)
+        self.video_label.image = photo
+
+        self.fps_label.config(
+            text=f"FPS:{self.fps:.1f}  state:{self.state}  MediaPipe + RKNN288"
+        )
+
+        self.root.after(1, self.update)
+
+    def run(self):
+        self.update()
+        self.root.mainloop()
+
+    def close(self):
+        try:
+            self.cap.release()
+        except Exception:
+            pass
+
+        try:
+            self.slr_rknn.release()
+        except Exception:
+            pass
+
+        try:
+            self.holistic.close()
+        except Exception:
+            pass
+
+        self.root.destroy()
+
+
+def main():
+    app = BoardMediapipeUI()
+    app.run()
+
+
+if __name__ == "__main__":
+    main()

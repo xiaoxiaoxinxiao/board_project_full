@@ -1,0 +1,165 @@
+import sys
+import cv2
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QLabel, QTextEdit, QLineEdit,
+    QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout
+)
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QImage, QPixmap, QFont
+
+
+class GovSignUI(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("多模态无障碍政务交互终端")
+        self.resize(1280, 720)
+        
+        self.camera = None
+        self.current_raw_text = ""   # 原始识别结果
+        
+        self.init_ui()
+        self.init_camera()
+
+    def init_ui(self):
+        self.setStyleSheet("""
+            QWidget { background-color: #f8fafc; font-family: Microsoft YaHei, Arial; }
+            QLabel, QTextEdit, QLineEdit, QPushButton { font-size: 18px; }
+            QPushButton {
+                background-color: #1677ff; color: white; border-radius: 8px; 
+                padding: 12px; font-weight: bold;
+            }
+            QPushButton:hover { background-color: #0958d9; }
+        """)
+
+        # ==================== 标题 ====================
+        title = QLabel("多模态无障碍政务交互终端")
+        title.setAlignment(Qt.AlignCenter)
+        title.setFont(QFont("Microsoft YaHei", 26, QFont.Bold))
+        title.setStyleSheet("color: #0f172a; padding: 15px; background: white; border-radius: 12px;")
+
+        # ==================== 左侧：手语采集区 ====================
+        self.camera_label = QLabel("摄像头启动中...")
+        self.camera_label.setAlignment(Qt.AlignCenter)
+        self.camera_label.setStyleSheet("background-color: #1e2937; color: white; border-radius: 16px;")
+
+        self.raw_status = QLabel("当前识别：等待手语输入")
+        self.raw_status.setAlignment(Qt.AlignCenter)
+        self.raw_status.setStyleSheet("background-color: #e0f2fe; color: #0369a1; border-radius: 12px; padding: 14px; font-weight: bold;")
+
+        left = QVBoxLayout()
+        left.addWidget(QLabel("① 手语采集区"))
+        left.addWidget(self.camera_label, 7)
+        left.addWidget(self.raw_status, 1)
+
+        # ==================== 中间：手语润色区 ====================
+        self.raw_text_label = QLabel("原始识别结果：")
+        self.raw_text_label.setStyleSheet("font-weight: bold;")
+
+        self.raw_display = QTextEdit()
+        self.raw_display.setReadOnly(True)
+        self.raw_display.setMaximumHeight(80)
+
+        self.polish_label = QLabel("✍️ 润色编辑区（可手动修改）：")
+        self.polish_label.setStyleSheet("font-weight: bold;")
+
+        self.polish_edit = QTextEdit()
+        self.polish_edit.setPlaceholderText("此处可对识别结果进行润色...")
+
+        self.send_polish_btn = QPushButton("✅ 确认润色并发送到工作人员端")
+        self.send_polish_btn.setStyleSheet("background-color: #10b981; padding: 14px;")
+        self.send_polish_btn.clicked.connect(self.send_polished_text)
+
+        self.sim_btn = QPushButton("模拟手语识别")
+        self.sim_btn.clicked.connect(self.simulate_sign)
+
+        mid = QVBoxLayout()
+        mid.addWidget(QLabel("② 手语润色区"))
+        mid.addWidget(self.raw_text_label)
+        mid.addWidget(self.raw_display)
+        mid.addWidget(self.polish_label)
+        mid.addWidget(self.polish_edit, 2)
+        mid.addWidget(self.send_polish_btn)
+        mid.addWidget(self.sim_btn)
+
+        # ==================== 右侧：系统状态 ====================
+        right = QVBoxLayout()
+        right.addWidget(QLabel("③ 系统状态"))
+        self.mqtt_label = self.make_status("MQTT", "已连接", "#10b981")
+        self.temp_label = self.make_status("温度", "37.8 ℃", "#f59e0b")
+        self.conf_label = self.make_status("置信度", "--", "#8b5cf6")
+        self.pos_label = self.make_status("Position", "正常", "#10b981")
+        self.fan_label = self.make_status("风扇", "自动", "#64748b")
+
+        for label in [self.mqtt_label, self.temp_label, self.conf_label, self.pos_label, self.fan_label]:
+            right.addWidget(label)
+        right.addStretch()
+
+        # ==================== 总布局 ====================
+        content = QHBoxLayout()
+        content.setSpacing(16)
+        content.addLayout(left, 4)
+        content.addLayout(mid, 5)
+        content.addLayout(right, 3)
+
+        main = QVBoxLayout()
+        main.addWidget(title)
+        main.addLayout(content)
+        self.setLayout(main)
+
+    def make_status(self, name, value, color):
+        label = QLabel(f"{name}：{value}")
+        label.setStyleSheet(f"background:white; padding:14px; border-radius:10px; border:2px solid {color}; font-weight:bold;")
+        return label
+
+    def init_camera(self):
+        self.camera = cv2.VideoCapture(0)
+        if not self.camera.isOpened():
+            self.camera_label.setText("摄像头打开失败")
+            return
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_camera)
+        self.timer.start(50)
+
+    def update_camera(self):
+        ret, frame = self.camera.read()
+        if not ret: return
+        frame = cv2.flip(frame, 1)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w = frame.shape[:2]
+        qimg = QImage(frame.data, w, h, w*3, QImage.Format_RGB888)
+        self.camera_label.setPixmap(QPixmap.fromImage(qimg).scaled(
+            self.camera_label.width(), self.camera_label.height(), 
+            Qt.KeepAspectRatio, Qt.FastTransformation))
+
+    def simulate_sign(self):
+        """模拟手语识别"""
+        text = "我要办理社保业务"
+        self.current_raw_text = text
+        
+        self.raw_status.setText(f"当前识别：{text}")
+        self.raw_display.setText(text)
+        self.polish_edit.setText(text + "，麻烦帮我处理一下。")  # 默认带一点润色
+        self.conf_label.setText("置信度：0.928")
+
+    def send_polished_text(self):
+        """润色后发送到工作人员端"""
+        polished = self.polish_edit.toPlainText().strip()
+        if not polished:
+            return
+            
+        self.raw_display.append("\n已发送润色内容 →")
+        # TODO: 后续在这里添加 MQTT 发送
+        print(f"[发送] 润色后内容: {polished}")
+        # 可以在这里弹出提示或加到聊天记录
+
+    def closeEvent(self, event):
+        if self.camera:
+            self.camera.release()
+        event.accept()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    ui = GovSignUI()
+    ui.show()
+    sys.exit(app.exec_())

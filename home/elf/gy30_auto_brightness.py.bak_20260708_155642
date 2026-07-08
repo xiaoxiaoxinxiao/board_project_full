@@ -1,0 +1,278 @@
+import os
+import time
+import json
+import subprocess
+from datetime import datetime
+
+
+# =========================
+# GY30 / BH1750 配置
+# =========================
+
+GY30_ADDR_CANDIDATES = [0x23, 0x5C]
+I2C_CANDIDATES = [0, 1, 2, 3, 4, 5, 6, 7]
+
+# 状态文件，UI 可以读取
+STATUS_FILE = "/tmp/slr_light_status.json"
+
+
+# =========================
+# 亮度映射参数：这里已经整体调亮
+# =========================
+
+# 最低亮度百分比，之前太暗就把这个调高
+MIN_BRIGHTNESS_PERCENT = 45
+
+# 最高亮度百分比
+MAX_BRIGHTNESS_PERCENT = 100
+
+# lux 小于这个值时，使用最低亮度
+LUX_DARK = 80
+
+# lux 大于这个值时，使用最高亮度
+LUX_BRIGHT = 500
+
+# 每次变化至少超过这个百分比才真正写入，避免频繁闪烁
+CHANGE_STEP_PERCENT = 0
+
+# 读取间隔
+INTERVAL_SECONDS = 1.0
+
+
+try:
+    import smbus
+except Exception:
+    try:
+        import smbus2 as smbus
+    except Exception:
+        smbus = None
+
+
+def find_backlight_paths():
+    root = "/sys/class/backlight"
+    paths = []
+
+    if not os.path.exists(root):
+        return paths
+
+    for name in os.listdir(root):
+        p = os.path.join(root, name)
+        if os.path.isfile(os.path.join(p, "brightness")) and os.path.isfile(os.path.join(p, "max_brightness")):
+            paths.append(p)
+
+    return paths
+
+
+def set_sys_backlight(percent):
+    paths = find_backlight_paths()
+
+    if not paths:
+        return False
+
+    percent = max(1, min(100, int(percent)))
+
+    for p in paths:
+        try:
+            with open(os.path.join(p, "max_brightness"), "r") as f:
+                max_brightness = int(f.read().strip())
+
+            value = int(max_brightness * percent / 100.0)
+            value = max(1, min(max_brightness, value))
+
+            with open(os.path.join(p, "brightness"), "w") as f:
+                f.write(str(value))
+
+            print(f"[backlight] {p} -> {value}/{max_brightness} ({percent}%)")
+
+        except Exception as e:
+            print("[backlight] write failed:", p, repr(e))
+
+    return True
+
+
+def get_xrandr_output():
+    try:
+        env = os.environ.copy()
+        env["DISPLAY"] = ":0"
+
+        out = subprocess.check_output(
+            ["xrandr"],
+            env=env,
+            stderr=subprocess.DEVNULL,
+            timeout=2
+        ).decode("utf-8", errors="ignore")
+
+        for line in out.splitlines():
+            if " connected" in line:
+                return line.split()[0]
+
+    except Exception:
+        pass
+
+    return None
+
+
+def set_xrandr_brightness(percent):
+    """
+    没有 /sys/class/backlight 时，尝试 xrandr 软件增亮。
+    注意：HDMI 屏幕物理背光不一定能被控制，这只是软件亮度。
+    """
+    output = get_xrandr_output()
+
+    if not output:
+        return False
+
+    # 60%~100% 映射到 xrandr 1.05~1.30，整体偏亮
+    percent = max(1, min(100, int(percent)))
+    xr = 0.75 + (percent / 100.0) * 0.50
+    xr = max(0.75, min(1.25, xr))
+
+    try:
+        env = os.environ.copy()
+        env["DISPLAY"] = ":0"
+
+        subprocess.call(
+            ["xrandr", "--output", output, "--brightness", f"{xr:.2f}"],
+            env=env
+        )
+
+        print(f"[xrandr] {output} brightness {xr:.2f}")
+        return True
+
+    except Exception as e:
+        print("[xrandr] failed:", repr(e))
+        return False
+
+
+def set_screen_brightness(percent):
+    ok = set_sys_backlight(percent)
+
+    if ok:
+        return "sysfs"
+
+    ok = set_xrandr_brightness(percent)
+
+    if ok:
+        return "xrandr"
+
+    return "none"
+
+
+def lux_to_brightness_percent(lux):
+    """
+    提高后的映射：
+    lux <= 10     -> 60%
+    lux 10~250    -> 60% 到 100%
+    lux >= 250    -> 100%
+    """
+    if lux is None:
+        return MAX_BRIGHTNESS_PERCENT
+
+    lux = max(0.0, float(lux))
+
+    if lux <= LUX_DARK:
+        return MIN_BRIGHTNESS_PERCENT
+
+    if lux >= LUX_BRIGHT:
+        return MAX_BRIGHTNESS_PERCENT
+
+    ratio = (lux - LUX_DARK) / (LUX_BRIGHT - LUX_DARK)
+    percent = MIN_BRIGHTNESS_PERCENT + ratio * (MAX_BRIGHTNESS_PERCENT - MIN_BRIGHTNESS_PERCENT)
+
+    return int(round(percent))
+
+
+def find_gy30():
+    if smbus is None:
+        raise RuntimeError("没有 smbus/smbus2，请安装 python3-smbus 或 smbus2")
+
+    for bus_id in I2C_CANDIDATES:
+        for addr in GY30_ADDR_CANDIDATES:
+            try:
+                bus = smbus.SMBus(bus_id)
+
+                # Power on
+                bus.write_byte(addr, 0x01)
+                time.sleep(0.05)
+
+                # Continuously H-Resolution Mode
+                bus.write_byte(addr, 0x10)
+                time.sleep(0.18)
+
+                data = bus.read_i2c_block_data(addr, 0x10, 2)
+                raw = (data[0] << 8) | data[1]
+                lux = raw / 1.2
+
+                print(f"发现 GY30/BH1750: /dev/i2c-{bus_id}, addr=0x{addr:02x}, lux={lux:.2f}")
+
+                return bus, addr
+
+            except Exception:
+                try:
+                    bus.close()
+                except Exception:
+                    pass
+
+    raise RuntimeError("没有找到 GY30/BH1750，请检查 I2C 接线和地址")
+
+
+def read_lux(bus, addr):
+    try:
+        bus.write_byte(addr, 0x10)
+        time.sleep(0.18)
+
+        data = bus.read_i2c_block_data(addr, 0x10, 2)
+        raw = (data[0] << 8) | data[1]
+        lux = raw / 1.2
+
+        return float(lux)
+
+    except Exception as e:
+        print("读取 GY30 失败:", repr(e))
+        return None
+
+
+def write_status(lux, brightness_percent, method):
+    data = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "lux": None if lux is None else round(float(lux), 2),
+        "brightness_percent": int(brightness_percent),
+        "method": method,
+        "min_brightness_percent": MIN_BRIGHTNESS_PERCENT,
+        "max_brightness_percent": MAX_BRIGHTNESS_PERCENT,
+        "lux_dark": LUX_DARK,
+        "lux_bright": LUX_BRIGHT,
+    }
+
+    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+
+def main():
+    print("GY30 自动调光服务启动：增强亮度版")
+    print("MIN_BRIGHTNESS_PERCENT =", MIN_BRIGHTNESS_PERCENT)
+    print("MAX_BRIGHTNESS_PERCENT =", MAX_BRIGHTNESS_PERCENT)
+    print("LUX_DARK =", LUX_DARK)
+    print("LUX_BRIGHT =", LUX_BRIGHT)
+
+    bus, addr = find_gy30()
+
+    last_percent = None
+
+    while True:
+        lux = read_lux(bus, addr)
+        percent = lux_to_brightness_percent(lux)
+
+        # 强制每次都写入屏幕亮度，避免只显示数值变了但屏幕没变化
+        method = set_screen_brightness(percent)
+        last_percent = percent
+
+        print(f"lux={lux} -> brightness={percent}% method={method}")
+
+        write_status(lux, percent, method)
+
+        time.sleep(INTERVAL_SECONDS)
+
+
+if __name__ == "__main__":
+    main()

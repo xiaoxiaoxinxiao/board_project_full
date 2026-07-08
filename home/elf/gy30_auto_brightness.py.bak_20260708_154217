@@ -1,0 +1,234 @@
+import time
+import json
+import subprocess
+from datetime import datetime
+
+try:
+    import smbus
+    SMBusClass = smbus.SMBus
+except Exception:
+    from smbus2 import SMBus as SMBusClass
+
+
+# ========== GY-30 / BH1750 配置 ==========
+GY30_ADDR_CANDIDATES = [0x23, 0x5C]
+I2C_BUS_CANDIDATES = [0, 1, 2, 3, 4, 5, 6, 7]
+BH1750_ONE_TIME_HIGH_RES = 0x20
+
+# ========== 屏幕配置 ==========
+DISPLAY = ":0"
+XRANDR_OUTPUT = "DSI-1"
+
+# ========== 自动亮度参数 ==========
+# 采样间隔，越小变化越快
+SAMPLE_DELAY = 0.5
+
+# 平滑系数，越大越跟手，越小越稳定
+SMOOTH_ALPHA = 0.65
+
+# xrandr 软件亮度范围
+# 这里把最低亮度提高，避免平常太暗
+MIN_BRIGHTNESS = 0.35
+MAX_BRIGHTNESS = 1.00
+
+STATUS_FILE = "/tmp/slr_light_status.json"
+
+
+def run_cmd(cmd):
+    env = {
+        "DISPLAY": DISPLAY,
+    }
+
+    return subprocess.check_output(
+        cmd,
+        stderr=subprocess.STDOUT,
+        env=env
+    ).decode("utf-8", errors="ignore")
+
+
+def wait_xrandr_ready():
+    print("等待 X 显示服务和 xrandr 就绪...", flush=True)
+
+    while True:
+        try:
+            out = run_cmd(["xrandr", "--query"])
+
+            if XRANDR_OUTPUT in out and " connected" in out:
+                print("xrandr 已就绪，屏幕输出:", XRANDR_OUTPUT, flush=True)
+                return
+
+            print("xrandr 未找到指定输出，当前输出：", flush=True)
+            print(out, flush=True)
+
+        except Exception as e:
+            print("xrandr 暂不可用:", repr(e), flush=True)
+
+        time.sleep(3)
+
+
+def set_xrandr_brightness(value):
+    value = max(MIN_BRIGHTNESS, min(MAX_BRIGHTNESS, float(value)))
+
+    run_cmd([
+        "xrandr",
+        "--output",
+        XRANDR_OUTPUT,
+        "--brightness",
+        f"{value:.2f}"
+    ])
+
+    return value
+
+
+def find_gy30():
+    for bus_id in I2C_BUS_CANDIDATES:
+        try:
+            bus = SMBusClass(bus_id)
+
+            for addr in GY30_ADDR_CANDIDATES:
+                try:
+                    bus.write_byte(addr, BH1750_ONE_TIME_HIGH_RES)
+                    time.sleep(0.2)
+
+                    data = bus.read_i2c_block_data(addr, 0x00, 2)
+                    raw = (data[0] << 8) | data[1]
+                    lux = raw / 1.2
+
+                    print(
+                        f"找到 GY-30/BH1750: /dev/i2c-{bus_id}, "
+                        f"addr=0x{addr:02x}, lux={lux:.2f}",
+                        flush=True
+                    )
+
+                    return bus, addr
+
+                except Exception:
+                    pass
+
+            try:
+                bus.close()
+            except Exception:
+                pass
+
+        except Exception:
+            pass
+
+    raise RuntimeError("没有找到 GY-30/BH1750，请检查 I2C 接线和地址")
+
+
+def read_lux(bus, addr):
+    bus.write_byte(addr, BH1750_ONE_TIME_HIGH_RES)
+    time.sleep(0.18)
+
+    data = bus.read_i2c_block_data(addr, 0x00, 2)
+    raw = (data[0] << 8) | data[1]
+
+    return raw / 1.2
+
+
+def lux_to_brightness(lux):
+    """
+    lux 越高，屏幕越亮。
+    当前版本：整体亮度调高，适合外接 DSI 屏日常使用。
+    """
+    if lux < 2:
+        b = 0.35
+    elif lux < 8:
+        b = 0.45
+    elif lux < 20:
+        b = 0.60
+    elif lux < 50:
+        b = 0.75
+    elif lux < 100:
+        b = 0.88
+    elif lux < 200:
+        b = 0.95
+    else:
+        b = 1.00
+
+    return max(MIN_BRIGHTNESS, min(MAX_BRIGHTNESS, b))
+
+
+def light_state(lux):
+    if lux < 2:
+        return "very_dark"
+    elif lux < 8:
+        return "dark"
+    elif lux < 20:
+        return "dim"
+    elif lux < 50:
+        return "normal"
+    elif lux < 100:
+        return "normal_bright"
+    elif lux < 200:
+        return "bright"
+    else:
+        return "very_bright"
+
+
+def write_status(lux, smooth_lux, brightness):
+    data = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "lux": round(float(lux), 2),
+        "smooth_lux": round(float(smooth_lux), 2),
+        "light_state": light_state(smooth_lux),
+        "xrandr_output": XRANDR_OUTPUT,
+        "brightness": round(float(brightness), 2),
+        "mode": "xrandr_software_brightness",
+    }
+
+    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+
+def main():
+    print("GY-30 + xrandr 软件自动亮度服务启动", flush=True)
+    print("屏幕输出:", XRANDR_OUTPUT, flush=True)
+    print("亮度范围:", MIN_BRIGHTNESS, "~", MAX_BRIGHTNESS, flush=True)
+
+    wait_xrandr_ready()
+
+    bus, addr = find_gy30()
+
+    smooth_lux = None
+    last_brightness = None
+
+    while True:
+        try:
+            lux = read_lux(bus, addr)
+
+            if smooth_lux is None:
+                smooth_lux = lux
+            else:
+                smooth_lux = SMOOTH_ALPHA * lux + (1.0 - SMOOTH_ALPHA) * smooth_lux
+
+            brightness = lux_to_brightness(smooth_lux)
+
+            # 只有亮度变化时才执行 xrandr
+            if last_brightness is None or abs(brightness - last_brightness) >= 0.01:
+                set_xrandr_brightness(brightness)
+                last_brightness = brightness
+
+            print(
+                f"lux={lux:.2f}, "
+                f"smooth={smooth_lux:.2f}, "
+                f"state={light_state(smooth_lux)}, "
+                f"xrandr_brightness={brightness:.2f}",
+                flush=True
+            )
+
+            write_status(lux, smooth_lux, brightness)
+
+            time.sleep(SAMPLE_DELAY)
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print("GY-30 xrandr 自动调光异常:", repr(e), flush=True)
+            time.sleep(2)
+
+    print("退出 GY-30 自动调光服务", flush=True)
+
+
+if __name__ == "__main__":
+    main()

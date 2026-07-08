@@ -1,0 +1,28 @@
+Xsession: X session started for elf at Sat May  2 02:19:30 UTC 2026
+localuser:elf being added to access control list
+localuser:root being added to access control list
+dbus-update-activation-environment: setting USER=elf
+dbus-update-activation-environment: setting XDG_SESSION_TYPE=x11
+dbus-update-activation-environment: setting HOME=/home/elf
+dbus-update-activation-environment: setting DESKTOP_SESSION=lightdm-xsession
+dbus-update-activation-environment: setting XDG_SEAT_PATH=/org/freedesktop/DisplayManager/Seat0
+dbus-update-activation-environment: setting DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-4CeccGKBJ9,guid=5a5b4117f77c3db8ee4c128869f55f32
+dbus-update-activation-environment: setting LOGNAME=elf
+dbus-update-activation-environment: setting XDG_SESSION_CLASS=user
+dbus-update-activation-environment: setting PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+dbus-update-activation-environment: setting XDG_SESSION_PATH=/org/freedesktop/DisplayManager/Session0
+dbus-update-activation-environment: setting XDG_RUNTIME_DIR=/run/user/1000
+dbus-update-activation-environment: setting DISPLAY=:0
+dbus-update-activation-environment: setting LANG=C.UTF-8
+dbus-update-activation-environment: setting XDG_SESSION_DESKTOP=lightdm-xsession
+dbus-update-activation-environment: setting XAUTHORITY=/home/elf/.Xauthority
+dbus-update-activation-environment: setting XDG_GREETER_DATA_DIR=/var/lib/lightdm/data/elf
+dbus-update-activation-environment: setting SHELL=/bin/bash
+dbus-update-activation-environment: setting GDMSESSION=lightdm-xsession
+dbus-update-activation-environment: setting GPG_AGENT_INFO=/run/user/1000/gnupg/S.gpg-agent:0:1
+dbus-update-activation-environment: setting PWD=/home/elf
+dbus-update-activation-environment: warning: error sending to systemd: org.freedesktop.DBus.Error.Spawn.ChildExited: Process org.freedesktop.systemd1 exited with status 1
+** Message: 02:19:30.890: main.vala:101: Session is LXDE
+** Message: 02:19:30.890: main.vala:102: DE is LXDE
+** Message: 02:19:30.917: main.vala:133: log directory: /home/elf/.cache/lxsession/LXDE
+** Message: 02:19:30.917: main.vala:134: log path: /home/elf/.cache/lxsession/LXDE/run.log

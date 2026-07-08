@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+import tkinter as tk
+import time
+import os
+
+DATA_FILE = "/home/elf/gy30_light_value.txt"
+REFRESH_MS = 300
+
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("GY-30 / MPU6050")
+        self.root.geometry("+20+20")
+        self.root.attributes("-topmost", True)
+
+        self.label = tk.Label(
+            root,
+            text="等待数据...",
+            font=("DejaVu Sans", 16),
+            bg="black",
+            fg="lime",
+            justify="left",
+            padx=12,
+            pady=10
+        )
+        self.label.pack()
+
+        self.update_ui()
+
+    def read_data(self):
+        if not os.path.exists(DATA_FILE):
+            return None
+
+        try:
+            with open(DATA_FILE, "r") as f:
+                line = f.read().strip()
+
+            parts = line.split(",")
+
+            lux = float(parts[0]) if len(parts) > 0 else 0.0
+            percent = float(parts[1]) if len(parts) > 1 else 0.0
+            timestamp = parts[2] if len(parts) > 2 else ""
+            lcd_percent = float(parts[3]) if len(parts) > 3 else 0.0
+            brightness = int(float(parts[4])) if len(parts) > 4 else 0
+            max_brightness = int(float(parts[5])) if len(parts) > 5 else 0
+
+            position = int(float(parts[6])) if len(parts) > 6 else -1
+            ay_logic = float(parts[7]) if len(parts) > 7 else 0.0
+            mpu_state = parts[8] if len(parts) > 8 else "UNKNOWN"
+            remain = float(parts[9]) if len(parts) > 9 else 0.0
+
+            return {
+                "lux": lux,
+                "percent": percent,
+                "timestamp": timestamp,
+                "lcd_percent": lcd_percent,
+                "brightness": brightness,
+                "max_brightness": max_brightness,
+                "position": position,
+                "ay_logic": ay_logic,
+                "mpu_state": mpu_state,
+                "remain": remain
+            }
+
+        except Exception as e:
+            return {"error": str(e)}
+
+    def update_ui(self):
+        data = self.read_data()
+
+        if data is None:
+            text = "等待数据文件...\n/home/elf/gy30_light_value.txt"
+
+        elif "error" in data:
+            text = "UI读取错误:\n%s" % data["error"]
+
+        else:
+            if data["position"] == 1:
+                pos_text = "位置 1：GY-30自动亮度"
+            elif data["position"] == 0:
+                pos_text = "位置 0：强制灭屏"
+            else:
+                pos_text = "位置未知"
+
+            if data["mpu_state"] == "LOCK":
+                lock_text = "MPU6050锁定中：%.1f 秒后可再次切换" % data["remain"]
+            elif data["mpu_state"] == "READ":
+                lock_text = "MPU6050可读取：可切换状态"
+            else:
+                lock_text = "MPU6050状态：%s" % data["mpu_state"]
+
+            text = (
+                "Lux: %.2f\n"
+                "Brightness: %d / %d\n"
+                "LCD: %.1f%%\n"
+                "%s\n"
+                "%s\n"
+                "AY_LOGIC: %.4f\n"
+                "%s"
+            ) % (
+                data["lux"],
+                data["brightness"],
+                data["max_brightness"],
+                data["lcd_percent"],
+                pos_text,
+                lock_text,
+                data["ay_logic"],
+                data["timestamp"]
+            )
+
+        self.label.config(text=text)
+        self.root.after(REFRESH_MS, self.update_ui)
+
+def main():
+    root = tk.Tk()
+    App(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,15 @@
+[Unit]
+Description=IMU Vibration Buzzer Alarm
+After=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/elf
+ExecStart=/usr/bin/python3 -u /home/elf/imu_vibration_buzzer.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/elf/imu_vibration_buzzer_autostart.log
+StandardError=append:/home/elf/imu_vibration_buzzer_autostart.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,369 @@
+import os
+import time
+import json
+import math
+from datetime import datetime
+
+
+# =========================
+# 蜂鸣器配置
+# =========================
+
+BUZZER_GPIO = 123
+BUZZER_ACTIVE_HIGH = True
+
+
+# =========================
+# MPU6050 配置
+# =========================
+
+MPU_ADDR = 0x68
+I2C_CANDIDATES = [0, 1, 2, 3, 4, 5, 6, 7]
+
+
+# =========================
+# 10度报警参数
+# =========================
+
+# 开机校准时间，保持设备静止
+CALIB_SECONDS = 3.0
+
+# 小于2度的变化认为是风扇/桌面小抖动，不处理
+ANGLE_DEADBAND_DEG = 2.0
+
+# 超过基准姿态10度开始累计报警
+ANGLE_ALARM_DEG = 17.0
+
+# 振动分数阈值，调高一点，避免风扇误触发
+VIB_SCORE_ALARM = 2.5
+
+# 连续12次异常才报警
+# 循环约0.08秒一次，12次约0.96秒
+TRIGGER_COUNT = 12
+
+# 蜂鸣器报警持续时间
+ALARM_SECONDS = 5
+
+# 报警冷却时间，避免连续重复响
+ALARM_COOLDOWN_SECONDS = 8
+
+STATUS_FILE = "/tmp/slr_imu_alarm_status.json"
+
+
+try:
+    import smbus
+except Exception:
+    try:
+        import smbus2 as smbus
+    except Exception:
+        smbus = None
+
+
+def gpio_write(on):
+    value = 1 if on else 0
+
+    if not BUZZER_ACTIVE_HIGH:
+        value = 0 if on else 1
+
+    with open(f"/sys/class/gpio/gpio{BUZZER_GPIO}/value", "w") as f:
+        f.write(str(value))
+
+
+def buzzer_on():
+    gpio_write(True)
+
+
+def buzzer_off():
+    gpio_write(False)
+
+
+def gpio_init():
+    path = f"/sys/class/gpio/gpio{BUZZER_GPIO}"
+
+    if not os.path.exists(path):
+        with open("/sys/class/gpio/export", "w") as f:
+            f.write(str(BUZZER_GPIO))
+        time.sleep(0.2)
+
+    with open(f"{path}/direction", "w") as f:
+        f.write("out")
+
+    buzzer_off()
+
+
+def buzzer_alarm(seconds):
+    end_t = time.time() + seconds
+
+    while time.time() < end_t:
+        buzzer_on()
+        time.sleep(0.15)
+        buzzer_off()
+        time.sleep(0.10)
+
+    buzzer_off()
+
+
+def read_word(bus, reg):
+    high = bus.read_byte_data(MPU_ADDR, reg)
+    low = bus.read_byte_data(MPU_ADDR, reg + 1)
+    val = (high << 8) | low
+
+    if val >= 0x8000:
+        val = -((65535 - val) + 1)
+
+    return val
+
+
+def mpu_init(bus):
+    # 唤醒 MPU6050
+    bus.write_byte_data(MPU_ADDR, 0x6B, 0x00)
+    time.sleep(0.1)
+
+    # 低通滤波，降低风扇高频振动影响
+    bus.write_byte_data(MPU_ADDR, 0x1A, 0x06)
+
+    # 采样率分频
+    bus.write_byte_data(MPU_ADDR, 0x19, 0x09)
+
+    # 陀螺仪量程 ±500 deg/s
+    bus.write_byte_data(MPU_ADDR, 0x1B, 0x08)
+
+    # 加速度量程 ±4g
+    bus.write_byte_data(MPU_ADDR, 0x1C, 0x08)
+
+
+def find_mpu_bus():
+    if smbus is None:
+        raise RuntimeError("没有 smbus/smbus2，请安装 python3-smbus 或 smbus2")
+
+    for bus_id in I2C_CANDIDATES:
+        try:
+            bus = smbus.SMBus(bus_id)
+            mpu_init(bus)
+
+            who = bus.read_byte_data(MPU_ADDR, 0x75)
+            print(f"发现 MPU6050: /dev/i2c-{bus_id}, WHO_AM_I=0x{who:02x}")
+
+            return bus
+
+        except Exception:
+            try:
+                bus.close()
+            except Exception:
+                pass
+
+    raise RuntimeError("没有找到 MPU6050，请检查 I2C 接线和地址")
+
+
+def read_mpu(bus):
+    """
+    ax ay az: g
+    gx gy gz: deg/s
+    """
+    ax = read_word(bus, 0x3B) / 8192.0
+    ay = read_word(bus, 0x3D) / 8192.0
+    az = read_word(bus, 0x3F) / 8192.0
+
+    gx = read_word(bus, 0x43) / 65.5
+    gy = read_word(bus, 0x45) / 65.5
+    gz = read_word(bus, 0x47) / 65.5
+
+    return ax, ay, az, gx, gy, gz
+
+
+def calc_pitch_roll(ax, ay, az):
+    pitch = math.degrees(math.atan2(ax, math.sqrt(ay * ay + az * az)))
+    roll = math.degrees(math.atan2(ay, math.sqrt(ax * ax + az * az)))
+    return pitch, roll
+
+
+def calc_vibration_score(prev, cur):
+    if prev is None:
+        return 0.0
+
+    ax, ay, az, gx, gy, gz = cur
+    pax, pay, paz, pgx, pgy, pgz = prev
+
+    da = math.sqrt((ax - pax) ** 2 + (ay - pay) ** 2 + (az - paz) ** 2)
+    gyro_mag = math.sqrt(gx * gx + gy * gy + gz * gz) / 250.0
+
+    return da + gyro_mag
+
+
+def calibrate_base(bus):
+    print(f"开始校准 MPU6050，保持设备静止 {CALIB_SECONDS} 秒...")
+
+    pitches = []
+    rolls = []
+    start = time.time()
+
+    while time.time() - start < CALIB_SECONDS:
+        ax, ay, az, gx, gy, gz = read_mpu(bus)
+        pitch, roll = calc_pitch_roll(ax, ay, az)
+
+        pitches.append(pitch)
+        rolls.append(roll)
+
+        time.sleep(0.05)
+
+    base_pitch = sum(pitches) / max(len(pitches), 1)
+    base_roll = sum(rolls) / max(len(rolls), 1)
+
+    print(f"校准完成: base_pitch={base_pitch:.2f}, base_roll={base_roll:.2f}")
+
+    return base_pitch, base_roll
+
+
+def write_status(
+    alarm,
+    reason,
+    score,
+    pitch,
+    roll,
+    base_pitch,
+    base_roll,
+    pitch_diff,
+    roll_diff,
+    hit_count,
+):
+    data = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "alarm": bool(alarm),
+        "motion": "ALARM" if alarm else "NORMAL",
+        "reason": reason,
+        "score": round(float(score), 4),
+        "pitch": round(float(pitch), 2),
+        "roll": round(float(roll), 2),
+        "base_pitch": round(float(base_pitch), 2),
+        "base_roll": round(float(base_roll), 2),
+        "pitch_diff": round(float(pitch_diff), 2),
+        "roll_diff": round(float(roll_diff), 2),
+        "hit_count": int(hit_count),
+        "angle_alarm_deg": ANGLE_ALARM_DEG,
+        "vib_score_alarm": VIB_SCORE_ALARM,
+    }
+
+    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+
+def main():
+    print("IMU 10度防盗报警服务启动")
+    print("BUZZER_GPIO =", BUZZER_GPIO)
+    print("ANGLE_DEADBAND_DEG =", ANGLE_DEADBAND_DEG)
+    print("ANGLE_ALARM_DEG =", ANGLE_ALARM_DEG)
+    print("VIB_SCORE_ALARM =", VIB_SCORE_ALARM)
+    print("TRIGGER_COUNT =", TRIGGER_COUNT)
+
+    gpio_init()
+
+    bus = find_mpu_bus()
+    base_pitch, base_roll = calibrate_base(bus)
+
+    prev_raw = None
+    hit_count = 0
+    last_alarm_time = 0
+
+    while True:
+        try:
+            cur = read_mpu(bus)
+            ax, ay, az, gx, gy, gz = cur
+
+            pitch, roll = calc_pitch_roll(ax, ay, az)
+
+            pitch_diff = abs(pitch - base_pitch)
+            roll_diff = abs(roll - base_roll)
+
+            score = calc_vibration_score(prev_raw, cur)
+            prev_raw = cur
+
+            angle_alarm = (
+                pitch_diff >= ANGLE_ALARM_DEG
+                or roll_diff >= ANGLE_ALARM_DEG
+            )
+
+            vib_alarm = score >= VIB_SCORE_ALARM
+
+            small_angle_noise = (
+                pitch_diff < ANGLE_DEADBAND_DEG
+                and roll_diff < ANGLE_DEADBAND_DEG
+            )
+
+            if small_angle_noise and not vib_alarm:
+                hit_count = max(0, hit_count - 1)
+                reason = "small_noise"
+            elif angle_alarm or vib_alarm:
+                hit_count += 1
+
+                if angle_alarm and vib_alarm:
+                    reason = "angle_10deg_plus_vibration"
+                elif angle_alarm:
+                    reason = "angle_10deg"
+                else:
+                    reason = "vibration"
+            else:
+                hit_count = max(0, hit_count - 1)
+                reason = "normal"
+
+            print(
+                f"pitch={pitch:.2f} roll={roll:.2f} "
+                f"dp={pitch_diff:.2f} dr={roll_diff:.2f} "
+                f"score={score:.3f} hit={hit_count} reason={reason}"
+            )
+
+            now = time.time()
+
+            if (
+                hit_count >= TRIGGER_COUNT
+                and now - last_alarm_time >= ALARM_COOLDOWN_SECONDS
+            ):
+                print("检测到超过10度姿态变化或连续激烈振动，蜂鸣器报警！")
+
+                write_status(
+                    True,
+                    reason,
+                    score,
+                    pitch,
+                    roll,
+                    base_pitch,
+                    base_roll,
+                    pitch_diff,
+                    roll_diff,
+                    hit_count,
+                )
+
+                buzzer_alarm(ALARM_SECONDS)
+
+                last_alarm_time = time.time()
+                hit_count = 0
+                buzzer_off()
+            else:
+                write_status(
+                    False,
+                    reason,
+                    score,
+                    pitch,
+                    roll,
+                    base_pitch,
+                    base_roll,
+                    pitch_diff,
+                    roll_diff,
+                    hit_count,
+                )
+
+            time.sleep(0.08)
+
+        except KeyboardInterrupt:
+            break
+
+        except Exception as e:
+            print("异常:", repr(e))
+            buzzer_off()
+            time.sleep(1)
+
+    buzzer_off()
+    print("退出")
+
+
+if __name__ == "__main__":
+    main()

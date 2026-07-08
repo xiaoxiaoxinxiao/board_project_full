@@ -1,0 +1,403 @@
+==============================
+start board_three_ui.py at Thu Jun 26 15:05:18 UTC 2025
+==============================
+X display ready
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:05:25.228] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:05:25.228] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:05:25.229] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:05:25.257] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:05:25.484] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:05:25.484] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:05:25.485] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:05:25.512] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:05:25.729] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:05:25.729] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:05:25.729] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:05:25.733] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+====================================
+start board_three_ui.py at Thu Jun 26 15:21:30 UTC 2025
+====================================
+X display ready
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:21:39.219] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:21:39.219] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:21:39.221] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:21:39.248] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:21:39.474] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:21:39.474] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:21:39.476] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:21:39.503] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:21:39.717] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:21:39.717] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:21:39.718] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:21:39.722] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+====================================
+start_board_three_ui.sh start at Thu Jun 26 15:26:15 UTC 2025
+====================================
+X display socket ready
+launch board_three_ui.py at Thu Jun 26 15:26:20 UTC 2025
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:26:29.131] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:26:29.132] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:26:29.136] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:26:29.184] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:26:29.489] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:26:29.489] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:26:29.490] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:26:29.519] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:26:29.771] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:26:29.771] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:26:29.771] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:26:29.775] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+====================================
+start_board_three_ui.sh start at Thu Jun 26 15:26:55 UTC 2025
+====================================
+X display socket ready
+launch board_three_ui.py at Thu Jun 26 15:27:00 UTC 2025
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Thu Jun 26 15:27:09 UTC 2025
+restart after 5 seconds...
+launch board_three_ui.py at Thu Jun 26 15:27:14 UTC 2025
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:27:25.669] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:27:25.670] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:27:25.675] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:27:25.722] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:27:25.993] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:27:25.993] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:27:25.994] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:27:26.021] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:27:26.247] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:27:26.247] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:27:26.248] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:27:26.251] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+====================================
+start_board_three_ui.sh start at Thu Jun 26 14:58:45 UTC 2025
+====================================
+X display socket ready
+launch board_three_ui.py at Thu Jun 26 14:58:50 UTC 2025
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Thu Jun 26 14:58:59 UTC 2025
+restart after 5 seconds...
+launch board_three_ui.py at Thu Jun 26 14:59:04 UTC 2025
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:13.713] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:13.714] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:13.718] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:13.767] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:14.038] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:14.038] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:14.039] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:14.067] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:14.293] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:14.294] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:14.294] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:14.298] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+board_three_ui.py exited, code=0 at Wed Jul  8 15:29:49 UTC 2026
+restart after 5 seconds...
+launch board_three_ui.py at Wed Jul  8 15:29:54 UTC 2026
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:30:03.050] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:30:03.050] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:30:03.051] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:30:03.081] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:30:03.330] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:30:03.330] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:30:03.331] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:30:03.361] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:30:03.588] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:30:03.588] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:30:03.589] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:30:03.593] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+board_three_ui.py exited, code=0 at Wed Jul  8 15:30:07 UTC 2026
+restart after 5 seconds...
+launch board_three_ui.py at Wed Jul  8 15:30:12 UTC 2026
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:30:20.037] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:30:20.037] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:30:20.038] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:30:20.067] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:30:20.319] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:30:20.319] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:30:20.320] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:30:20.349] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:30:20.584] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:30:20.585] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:30:20.585] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:30:20.589] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+board_three_ui.py exited, code=0 at Wed Jul  8 15:31:28 UTC 2026
+restart after 5 seconds...
+launch board_three_ui.py at Wed Jul  8 15:31:33 UTC 2026
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:31:41.364] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:31:41.364] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:31:41.365] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:31:41.395] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:31:41.650] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:31:41.650] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:31:41.651] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:31:41.680] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [15:31:41.922] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [15:31:41.922] RKNN Driver Information, version: 0.9.8
+I RKNN: [15:31:41.922] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [15:31:41.927] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+X connection to :0 broken (explicit kill or server shutdown).
+====================================
+start_board_three_ui.sh start at Wed Jul  8 16:05:08 UTC 2026
+====================================
+X display socket ready
+launch board_three_ui.py at Wed Jul  8 16:05:13 UTC 2026
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Wed Jul  8 16:05:22 UTC 2026
+restart after 5 seconds...
+launch board_three_ui.py at Wed Jul  8 16:05:27 UTC 2026
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Wed Jul  8 16:05:36 UTC 2026
+restart after 5 seconds...
+launch board_three_ui.py at Wed Jul  8 16:05:41 UTC 2026
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [16:05:49.847] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [16:05:49.848] RKNN Driver Information, version: 0.9.8
+I RKNN: [16:05:49.853] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [16:05:49.902] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [16:05:50.172] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [16:05:50.172] RKNN Driver Information, version: 0.9.8
+I RKNN: [16:05:50.173] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [16:05:50.200] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [16:05:50.429] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [16:05:50.430] RKNN Driver Information, version: 0.9.8
+I RKNN: [16:05:50.430] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [16:05:50.434] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+====================================
+start_board_three_ui.sh start at Thu Jun 26 14:58:45 UTC 2025
+====================================
+X display socket ready
+launch board_three_ui.py at Thu Jun 26 14:58:50 UTC 2025
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Thu Jun 26 14:58:59 UTC 2025
+restart after 5 seconds...
+launch board_three_ui.py at Thu Jun 26 14:59:04 UTC 2025
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:16.880] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:16.881] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:16.886] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:16.936] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:17.208] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:17.208] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:17.209] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:17.237] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:17.504] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:17.504] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:17.504] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:17.509] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+====================================
+start_board_three_ui.sh start at Thu Jun 26 14:58:45 UTC 2025
+====================================
+X display socket ready
+launch board_three_ui.py at Thu Jun 26 14:58:50 UTC 2025
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Thu Jun 26 14:58:59 UTC 2025
+restart after 5 seconds...
+launch board_three_ui.py at Thu Jun 26 14:59:04 UTC 2025
+Invalid MIT-MAGIC-COOKIE-1 key
+Invalid MIT-MAGIC-COOKIE-1 key
+Traceback (most recent call last):
+  File "/home/elf/slr_demo/board_three_ui.py", line 666, in <module>
+    main()
+  File "/home/elf/slr_demo/board_three_ui.py", line 631, in main
+    app = BoardUI()
+          ^^^^^^^^^
+  File "/home/elf/slr_demo/board_three_ui.py", line 147, in __init__
+    self.root = tk.Tk()
+                ^^^^^^^
+  File "/usr/lib/python3.11/tkinter/__init__.py", line 2326, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: couldn't connect to display ":0"
+board_three_ui.py exited, code=1 at Thu Jun 26 14:59:13 UTC 2025
+restart after 5 seconds...
+launch board_three_ui.py at Thu Jun 26 14:59:18 UTC 2025
+/home/elf/slr_demo/board_three_ui.py:136: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=client_id)
+load dict: dictionary.txt classes: 500
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:27.372] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:27.373] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:27.377] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:27.426] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:27.695] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:27.695] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:27.696] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:27.723] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)
+W rknn-toolkit-lite2 version: 2.3.2
+I RKNN: [14:59:27.954] RKNN Runtime Information, librknnrt version: 2.3.2 (429f97ae6b@2025-04-09T09:09:27)
+I RKNN: [14:59:27.955] RKNN Driver Information, version: 0.9.8
+I RKNN: [14:59:27.955] RKNN Model Information, version: 6, toolkit version: 2.3.2(compiler version: 2.3.2 (e045de294f@2025-04-07T19:48:25)), target: RKNPU f3, target platform: rv1126b, framework name: ONNX, framework layout: NCHW, model inference type: static_shape
+W RKNN: [14:59:27.962] query RKNN_QUERY_INPUT_DYNAMIC_RANGE error, rknn model is static shape type, please export rknn with dynamic_shapes
+W Query dynamic range failed. Ret code: RKNN_ERR_MODEL_INVALID. (If it is a static shape RKNN model, please ignore the above warning message.)

@@ -1,0 +1,209 @@
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+Traceback (most recent call last):
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 347, in <module>
+    main()
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 220, in main
+    init_gy30(gy30)
+  File "/home/elf/mpu6050_gy30_gesture_control.py", line 141, in init_gy30
+    f.write(bytes([BH1750_POWER_ON]))
+OSError: [Errno 6] No such device or address
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
